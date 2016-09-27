@@ -16,6 +16,7 @@
 #define force_inline __inline__ __attribute__((always_inline))
 
 /// Foundation Class Type
+//  Foundation Class 的基本类型
 typedef NS_ENUM (NSUInteger, YYEncodingNSType) {
     YYEncodingTypeNSUnknown = 0,
     YYEncodingTypeNSString,
@@ -36,6 +37,7 @@ typedef NS_ENUM (NSUInteger, YYEncodingNSType) {
 };
 
 /// Get the Foundation class type from property info.
+//  根据class 类型，返回YYEncodingNSType
 static force_inline YYEncodingNSType YYClassGetNSType(Class cls) {
     if (!cls) return YYEncodingTypeNSUnknown;
     if ([cls isSubclassOfClass:[NSMutableString class]]) return YYEncodingTypeNSMutableString;
@@ -57,6 +59,7 @@ static force_inline YYEncodingNSType YYClassGetNSType(Class cls) {
 }
 
 /// Whether the type is c number.
+// 判断是不是一个c类型的number
 static force_inline BOOL YYEncodingTypeIsCNumber(YYEncodingType type) {
     switch (type & YYEncodingTypeMask) {
         case YYEncodingTypeBool:
@@ -76,6 +79,7 @@ static force_inline BOOL YYEncodingTypeIsCNumber(YYEncodingType type) {
 }
 
 /// Parse a number value from 'id'.
+/// 把id类型的对象转成一个NSNumber
 static force_inline NSNumber *YYNSNumberCreateFromID(__unsafe_unretained id value) {
     static NSCharacterSet *dot;
     static NSDictionary *dic;
