@@ -136,6 +136,7 @@ static force_inline NSNumber *YYNSNumberCreateFromID(__unsafe_unretained id valu
 }
 
 /// Parse string to date.
+/// NSString 解析成时间
 static force_inline NSDate *YYNSDateFromString(__unsafe_unretained NSString *string) {
     typedef NSDate* (^YYNSDateParseBlock)(NSString *string);
     #define kParserNum 34
@@ -248,6 +249,7 @@ static force_inline NSDate *YYNSDateFromString(__unsafe_unretained NSString *str
 
 
 /// Get the 'NSBlock' class.
+/// 获取NSBlock
 static force_inline Class YYNSBlockClass() {
     static Class cls;
     static dispatch_once_t onceToken;
@@ -272,6 +274,7 @@ static force_inline Class YYNSBlockClass() {
  2011-01-26T19:06:43Z
  
  length: 20/24/25
+ *获取NSDateFormatter
  */
 static force_inline NSDateFormatter *YYISODateFormatter() {
     static NSDateFormatter *formatter = nil;
@@ -321,6 +324,7 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
 
 
 /// A property info in object model.
+/// 属性的元信息
 @interface _YYModelPropertyMeta : NSObject {
     @package
     NSString *_name;             ///< property's name
@@ -455,6 +459,7 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
 
 
 /// A class info in object model.
+/// 类信息的再一次包装
 @interface _YYModelMeta : NSObject {
     @package
     YYClassInfo *_classInfo;

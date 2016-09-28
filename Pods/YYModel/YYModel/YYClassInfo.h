@@ -16,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  Type encoding's type.
+ * 基本类型，通过runtime，编码解析出来
  */
 typedef NS_OPTIONS(NSUInteger, YYEncodingType) {
     YYEncodingTypeMask       = 0xFF, ///< mask of type value
@@ -78,6 +79,7 @@ YYEncodingType YYEncodingGetType(const char *typeEncoding);
 
 /**
  Instance variable information.
+ * 成员变量信息
  */
 @interface YYClassIvarInfo : NSObject
 @property (nonatomic, assign, readonly) Ivar ivar;              ///< ivar opaque struct
@@ -98,6 +100,7 @@ YYEncodingType YYEncodingGetType(const char *typeEncoding);
 
 /**
  Method information.
+ * 方法信息
  */
 @interface YYClassMethodInfo : NSObject
 @property (nonatomic, assign, readonly) Method method;                  ///< method opaque struct
@@ -120,6 +123,7 @@ YYEncodingType YYEncodingGetType(const char *typeEncoding);
 
 /**
  Property information.
+ * 属性信息的封装
  */
 @interface YYClassPropertyInfo : NSObject
 @property (nonatomic, assign, readonly) objc_property_t property; ///< property's opaque struct
@@ -144,6 +148,7 @@ YYEncodingType YYEncodingGetType(const char *typeEncoding);
 
 /**
  Class information for a class.
+ * 类信息
  */
 @interface YYClassInfo : NSObject
 @property (nonatomic, assign, readonly) Class cls; ///< class object

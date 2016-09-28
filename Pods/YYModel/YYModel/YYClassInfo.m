@@ -12,8 +12,10 @@
 #import "YYClassInfo.h"
 #import <objc/runtime.h>
 
+// 把runtime，苹果定义的类型解析成自己定义的类型
 YYEncodingType YYEncodingGetType(const char *typeEncoding) {
     char *type = (char *)typeEncoding;
+    // NULL 或者“”，直接返回YYEncodingTypeUnknown
     if (!type) return YYEncodingTypeUnknown;
     size_t len = strlen(type);
     if (len == 0) return YYEncodingTypeUnknown;
@@ -90,6 +92,7 @@ YYEncodingType YYEncodingGetType(const char *typeEncoding) {
     }
 }
 
+// 成员变量类封装实现
 @implementation YYClassIvarInfo
 
 - (instancetype)initWithIvar:(Ivar)ivar {
@@ -111,6 +114,7 @@ YYEncodingType YYEncodingGetType(const char *typeEncoding) {
 
 @end
 
+// 方法类封装的实现
 @implementation YYClassMethodInfo
 
 - (instancetype)initWithMethod:(Method)method {
@@ -148,6 +152,7 @@ YYEncodingType YYEncodingGetType(const char *typeEncoding) {
 
 @end
 
+// 类属性封装的实现
 @implementation YYClassPropertyInfo
 
 - (instancetype)initWithProperty:(objc_property_t)property {
@@ -235,7 +240,7 @@ YYEncodingType YYEncodingGetType(const char *typeEncoding) {
         free(attrs);
         attrs = NULL;
     }
-    
+    // 解析出属性的修饰词，例如类型，strong，weak，copy之类的
     _type = type;
     if (_name.length) {
         if (!_getter) {
@@ -257,6 +262,7 @@ YYEncodingType YYEncodingGetType(const char *typeEncoding) {
 - (instancetype)initWithClass:(Class)cls {
     if (!cls) return nil;
     self = [super init];
+    
     _cls = cls;
     _superCls = class_getSuperclass(cls);
     _isMeta = class_isMetaClass(cls);
@@ -277,6 +283,7 @@ YYEncodingType YYEncodingGetType(const char *typeEncoding) {
     
     Class cls = self.cls;
     unsigned int methodCount = 0;
+    // 获取方法
     Method *methods = class_copyMethodList(cls, &methodCount);
     if (methods) {
         NSMutableDictionary *methodInfos = [NSMutableDictionary new];
@@ -287,6 +294,7 @@ YYEncodingType YYEncodingGetType(const char *typeEncoding) {
         }
         free(methods);
     }
+    // 获取属性
     unsigned int propertyCount = 0;
     objc_property_t *properties = class_copyPropertyList(cls, &propertyCount);
     if (properties) {
@@ -299,6 +307,7 @@ YYEncodingType YYEncodingGetType(const char *typeEncoding) {
         free(properties);
     }
     
+    // 获取变量
     unsigned int ivarCount = 0;
     Ivar *ivars = class_copyIvarList(cls, &ivarCount);
     if (ivars) {
@@ -326,11 +335,16 @@ YYEncodingType YYEncodingGetType(const char *typeEncoding) {
     return _needUpdate;
 }
 
+// 静态方法
 + (instancetype)classInfoWithClass:(Class)cls {
     if (!cls) return nil;
+    
+    // class 缓存
     static CFMutableDictionaryRef classCache;
+    // 元class缓存
     static CFMutableDictionaryRef metaCache;
     static dispatch_once_t onceToken;
+    // 锁
     static dispatch_semaphore_t lock;
     dispatch_once(&onceToken, ^{
         classCache = CFDictionaryCreateMutable(CFAllocatorGetDefault(), 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
@@ -338,11 +352,13 @@ YYEncodingType YYEncodingGetType(const char *typeEncoding) {
         lock = dispatch_semaphore_create(1);
     });
     dispatch_semaphore_wait(lock, DISPATCH_TIME_FOREVER);
+    // 先从缓存里找
     YYClassInfo *info = CFDictionaryGetValue(class_isMetaClass(cls) ? metaCache : classCache, (__bridge const void *)(cls));
     if (info && info->_needUpdate) {
         [info _update];
     }
     dispatch_semaphore_signal(lock);
+    // 为空，就新建一个
     if (!info) {
         info = [[YYClassInfo alloc] initWithClass:cls];
         if (info) {
