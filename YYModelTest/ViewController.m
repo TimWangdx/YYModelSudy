@@ -35,11 +35,20 @@
 }
 
 - (void)test1{
+//    NSDictionary *dict = @{
+//                           @"uid":@123456,
+//                           @"name":@"Harry",
+//                           @"created":@"1965-07-31T00:00:00+0000"
+//                           };
+    
     NSDictionary *dict = @{
-                           @"uid":@123456,
-                           @"name":@"Harry",
-                           @"created":@"1965-07-31T00:00:00+0000"
-                           };
+                            @"n":@"Harry Pottery",
+                            @"p": @256,
+                            @"ext" : @{
+                                @"desc" : @"A book written by J.K.Rowling."
+                            },
+                            @"ID" : @100010
+                            };
     
     // Convert json to model:
     User *user = [User yy_modelWithJSON:dict];
@@ -49,6 +58,22 @@
     
     NSLog(@"%@",user);
     NSLog(@"json = %@",json);
+    
+    NSArray *keyPath = @[@"1",@"2",@"",@"3",@"",@"4",@"2"];
+    
+    for (NSString *onePath in keyPath) {
+        if (onePath.length == 0) {
+            NSMutableArray *tmp = keyPath.mutableCopy;
+            [tmp removeObject:@""];
+            keyPath = tmp;
+            break;
+        }
+    }
+    NSLog(@"%@",keyPath);
+    
+    
+    NSDictionary *jsonDict = [user yy_modelToJSONObject];
+    NSLog(@"jsonDict = %@",jsonDict);
 }
 
 @end

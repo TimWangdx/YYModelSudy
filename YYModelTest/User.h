@@ -10,8 +10,17 @@
 
 @interface User : NSObject
 
-@property UInt64 uid;
+//@property UInt64 uid;
+//@property NSString *name;
+//@property NSDate *created;
+
 @property NSString *name;
-@property NSDate *created;
+@property NSInteger page;
+@property NSString *desc;
+@property NSString *bookID;
+
+@property NSString *hehename;
+
+@property (nonatomic, strong) NSArray *books;
 
 @end

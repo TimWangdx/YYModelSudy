@@ -463,16 +463,38 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
 @interface _YYModelMeta : NSObject {
     @package
     YYClassInfo *_classInfo;
+    
     /// Key:mapped key and key path, Value:_YYModelPropertyMeta.
+    // 需要解析的json数据里的字段为key，需要映射的属性为value
+//    Printing description of self->_mapper:
+//    {
+//        "ext.desc" = "<_YYModelPropertyMeta: 0x7fd153d3a430>";
+//        n = "<_YYModelPropertyMeta: 0x7fd153d3a330>";
+//        (
+//         id,
+//         ID,
+//         "book_id"
+//         ) = "<_YYModelPropertyMeta: 0x7fd153d39ee0>";
+//        p = "<_YYModelPropertyMeta: 0x7fd153d3a5c0>";
+//        books = "<_YYModelPropertyMeta: 0x7fd153d3a150>";
+//    }
     NSDictionary *_mapper;
+    
     /// Array<_YYModelPropertyMeta>, all property meta of this model.
+    // 所有的需要解析的属性，经过白名单，黑名单的筛选
     NSArray *_allPropertyMetas;
+    
     /// Array<_YYModelPropertyMeta>, property meta which is mapped to a key path.
+    // 需要解析的映射的为keyPath,例如,book.author
     NSArray *_keyPathPropertyMetas;
+    
     /// Array<_YYModelPropertyMeta>, property meta which is mapped to multi keys.
+    // 属性映射的为一个数组，即一个属性映射到一个数组，例如@[@"id",@"ID",@"Id"]都可以解析为名字为@“UID”的属性字段
     NSArray *_multiKeysPropertyMetas;
+    
     /// The number of mapped key (and key path), same to _mapper.count.
     NSUInteger _keyMappedCount;
+    
     /// Model class type.
     YYEncodingNSType _nsType;
     
@@ -490,6 +512,7 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
     self = [super init];
     
     // Get black list
+    // 获取黑名单
     NSSet *blacklist = nil;
     if ([cls respondsToSelector:@selector(modelPropertyBlacklist)]) {
         NSArray *properties = [(id<YYModel>)cls modelPropertyBlacklist];
@@ -499,6 +522,7 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
     }
     
     // Get white list
+    // 获取白名单
     NSSet *whitelist = nil;
     if ([cls respondsToSelector:@selector(modelPropertyWhitelist)]) {
         NSArray *properties = [(id<YYModel>)cls modelPropertyWhitelist];
@@ -508,18 +532,24 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
     }
     
     // Get container property's generic class
+    // 容器里，字典里包含对象的类型
+    // key : 属性名，为容器，value ： 为容器里的对象类型
     NSDictionary *genericMapper = nil;
     if ([cls respondsToSelector:@selector(modelContainerPropertyGenericClass)]) {
         genericMapper = [(id<YYModel>)cls modelContainerPropertyGenericClass];
         if (genericMapper) {
             NSMutableDictionary *tmp = [NSMutableDictionary new];
             [genericMapper enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+                // 遇到一个key不是NSString类型的直接返回
                 if (![key isKindOfClass:[NSString class]]) return;
+                
                 Class meta = object_getClass(obj);
                 if (!meta) return;
+                
                 if (class_isMetaClass(meta)) {
                     tmp[key] = obj;
                 } else if ([obj isKindOfClass:[NSString class]]) {
+                    // 从字符串中解析出类
                     Class cls = NSClassFromString(obj);
                     if (cls) {
                         tmp[key] = cls;
@@ -531,42 +561,66 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
     }
     
     // Create all property metas.
+    // 获取所有属性
     NSMutableDictionary *allPropertyMetas = [NSMutableDictionary new];
     YYClassInfo *curClassInfo = classInfo;
     while (curClassInfo && curClassInfo.superCls != nil) { // recursive parse super class, but ignore root class (NSObject/NSProxy)
         for (YYClassPropertyInfo *propertyInfo in curClassInfo.propertyInfos.allValues) {
             if (!propertyInfo.name) continue;
+            
+            // 在黑名单里就忽略这个属性
             if (blacklist && [blacklist containsObject:propertyInfo.name]) continue;
+            // 不在白名单里忽略这个属性
             if (whitelist && ![whitelist containsObject:propertyInfo.name]) continue;
+            
             _YYModelPropertyMeta *meta = [_YYModelPropertyMeta metaWithClassInfo:classInfo
                                                                     propertyInfo:propertyInfo
-                                                                         generic:genericMapper[propertyInfo.name]];
+                                                                         generic:genericMapper[propertyInfo.name]];// 如果是容器属性，里面存放的对象的类型class
             if (!meta || !meta->_name) continue;
+            
             if (!meta->_getter || !meta->_setter) continue;
+            
             if (allPropertyMetas[meta->_name]) continue;
+            
             allPropertyMetas[meta->_name] = meta;
         }
         curClassInfo = curClassInfo.superClassInfo;
     }
+    
+    // 解析出有效的模型转换时候的属性
     if (allPropertyMetas.count) _allPropertyMetas = allPropertyMetas.allValues.copy;
     
     // create mapper
+    // 保存用户返回的key ---->>> 属性_YYModelPropertyMeta，key是字符串或者数组，例如@"name":p1,@["1","2","3"]:p2
     NSMutableDictionary *mapper = [NSMutableDictionary new];
+    // 保存属性，key是keyPath的，例如book.author
     NSMutableArray *keyPathPropertyMetas = [NSMutableArray new];
+    // 八寸属性，key是数组的，@[@"id",@"ID",@"Id"]
     NSMutableArray *multiKeysPropertyMetas = [NSMutableArray new];
     
+    // 属性名 ，字典名的key不一致的时候，做个属性--->>> key 的映射
     if ([cls respondsToSelector:@selector(modelCustomPropertyMapper)]) {
+        // 获取用户自定义返回的字典
         NSDictionary *customMapper = [(id <YYModel>)cls modelCustomPropertyMapper];
+        
+        // 遍历
         [customMapper enumerateKeysAndObjectsUsingBlock:^(NSString *propertyName, NSString *mappedToKey, BOOL *stop) {
+            // 不在符合要求的allPropertyMetas里，就跳过
             _YYModelPropertyMeta *propertyMeta = allPropertyMetas[propertyName];
             if (!propertyMeta) return;
+            
+            // 这个是局部变量的数组，到这一步没说明是需要映射的，把这个从局部数字里删除，到这个枚举之后，应该有剩下的不需要映射的，就做不映射的处理
             [allPropertyMetas removeObjectForKey:propertyName];
             
+            // 检查映射的key 的类型
             if ([mappedToKey isKindOfClass:[NSString class]]) {
                 if (mappedToKey.length == 0) return;
                 
                 propertyMeta->_mappedToKey = mappedToKey;
+                
+                // 解析.语法
                 NSArray *keyPath = [mappedToKey componentsSeparatedByString:@"."];
+                // 去掉“”的字符串
                 for (NSString *onePath in keyPath) {
                     if (onePath.length == 0) {
                         NSMutableArray *tmp = keyPath.mutableCopy;
@@ -575,20 +629,27 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
                         break;
                     }
                 }
+                // 有.语法，例如 book.author keyPath = @[@"book",@"author"];
                 if (keyPath.count > 1) {
                     propertyMeta->_mappedToKeyPath = keyPath;
                     [keyPathPropertyMetas addObject:propertyMeta];
                 }
+                // 不同属性映射到了同一个key,要把上一个属性保存下来，因为在字典里会被覆盖掉，所以通过字典里保存的属性_next来指向下一个属性
                 propertyMeta->_next = mapper[mappedToKey] ?: nil;
+                
+                // 映射的key为字典,_YYModelPropertyMeta为value
                 mapper[mappedToKey] = propertyMeta;
                 
             } else if ([mappedToKey isKindOfClass:[NSArray class]]) {
-                
+                // 映射的value为数组
                 NSMutableArray *mappedToKeyArray = [NSMutableArray new];
                 for (NSString *oneKey in ((NSArray *)mappedToKey)) {
+                    // 不是字符串，则忽略
                     if (![oneKey isKindOfClass:[NSString class]]) continue;
+                    // 字符串为“”则忽略
                     if (oneKey.length == 0) continue;
                     
+                    // 有点.的解析成数组
                     NSArray *keyPath = [oneKey componentsSeparatedByString:@"."];
                     if (keyPath.count > 1) {
                         [mappedToKeyArray addObject:keyPath];
@@ -612,6 +673,7 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
         }];
     }
     
+    // 现在allPropertyMetas剩下不需要做映射的，那也处理下
     [allPropertyMetas enumerateKeysAndObjectsUsingBlock:^(NSString *name, _YYModelPropertyMeta *propertyMeta, BOOL *stop) {
         propertyMeta->_mappedToKey = name;
         propertyMeta->_next = mapper[name] ?: nil;
@@ -646,9 +708,12 @@ static force_inline id YYValueForMultiKeys(__unsafe_unretained NSDictionary *dic
     dispatch_semaphore_wait(lock, DISPATCH_TIME_FOREVER);
     _YYModelMeta *meta = CFDictionaryGetValue(cache, (__bridge const void *)(cls));
     dispatch_semaphore_signal(lock);
+    // 如果为空或者需要更新
     if (!meta || meta->_classInfo.needUpdate) {
+        // 重新生成一个
         meta = [[_YYModelMeta alloc] initWithClass:cls];
         if (meta) {
+            // 缓存起来
             dispatch_semaphore_wait(lock, DISPATCH_TIME_FOREVER);
             CFDictionarySetValue(cache, (__bridge const void *)(cls), (__bridge const void *)(meta));
             dispatch_semaphore_signal(lock);
@@ -793,12 +858,14 @@ static force_inline void ModelSetNumberToProperty(__unsafe_unretained id model,
 static void ModelSetValueForProperty(__unsafe_unretained id model,
                                      __unsafe_unretained id value,
                                      __unsafe_unretained _YYModelPropertyMeta *meta) {
+    // 属性是一个c类型的数据，比如简单的int，double,bool之类的
     if (meta->_isCNumber) {
         NSNumber *num = YYNSNumberCreateFromID(value);
         ModelSetNumberToProperty(model, num, meta);
         if (num) [num class]; // hold the number
     } else if (meta->_nsType) {
         if (value == (id)kCFNull) {
+            // 为空，则设置为nil
             ((void (*)(id, SEL, id))(void *) objc_msgSend)((id)model, meta->_setter, (id)nil);
         } else {
             switch (meta->_nsType) {
@@ -1013,6 +1080,7 @@ static void ModelSetValueForProperty(__unsafe_unretained id model,
             }
         }
     } else {
+        // 设置oc 对象
         BOOL isNull = (value == (id)kCFNull);
         switch (meta->_type & YYEncodingTypeMask) {
             case YYEncodingTypeObject: {
@@ -1021,6 +1089,7 @@ static void ModelSetValueForProperty(__unsafe_unretained id model,
                 } else if ([value isKindOfClass:meta->_cls] || !meta->_cls) {
                     ((void (*)(id, SEL, id))(void *) objc_msgSend)((id)model, meta->_setter, (id)value);
                 } else if ([value isKindOfClass:[NSDictionary class]]) {
+                    // 字典，递归设置
                     NSObject *one = nil;
                     if (meta->_getter) {
                         one = ((id (*)(id, SEL))(void *) objc_msgSend)((id)model, meta->_getter);
@@ -1120,14 +1189,18 @@ typedef struct {
  @param _key     should not be nil, NSString.
  @param _value   should not be nil.
  @param _context _context.modelMeta and _context.model should not be nil.
+ 
+ * 遍历
  */
 static void ModelSetWithDictionaryFunction(const void *_key, const void *_value, void *_context) {
     ModelSetContext *context = _context;
     __unsafe_unretained _YYModelMeta *meta = (__bridge _YYModelMeta *)(context->modelMeta);
+    // 通过key 映射找到对应的属性，
     __unsafe_unretained _YYModelPropertyMeta *propertyMeta = [meta->_mapper objectForKey:(__bridge id)(_key)];
     __unsafe_unretained id model = (__bridge id)(context->model);
     while (propertyMeta) {
         if (propertyMeta->_setter) {
+            // 设置model的属性
             ModelSetValueForProperty(model, (__bridge __unsafe_unretained id)_value, propertyMeta);
         }
         propertyMeta = propertyMeta->_next;
@@ -1441,6 +1514,7 @@ static NSString *ModelDescription(NSObject *model) {
 
 @implementation NSObject (YYModel)
 
+// json data，字符串转成字典
 + (NSDictionary *)_yy_dictionaryWithJSON:(id)json {
     if (!json || json == (id)kCFNull) return nil;
     NSDictionary *dic = nil;
@@ -1459,22 +1533,30 @@ static NSString *ModelDescription(NSObject *model) {
     return dic;
 }
 
+// json 转成对象
 + (instancetype)yy_modelWithJSON:(id)json {
     NSDictionary *dic = [self _yy_dictionaryWithJSON:json];
     return [self yy_modelWithDictionary:dic];
 }
 
+// 字典--->>>转成对象
 + (instancetype)yy_modelWithDictionary:(NSDictionary *)dictionary {
+    // 参数判断
     if (!dictionary || dictionary == (id)kCFNull) return nil;
     if (![dictionary isKindOfClass:[NSDictionary class]]) return nil;
     
     Class cls = [self class];
+    
+    // 生成model 的meta信息对象
     _YYModelMeta *modelMeta = [_YYModelMeta metaWithClass:cls];
+    
     if (modelMeta->_hasCustomClassFromDictionary) {
+        // 是否眼转成其它对象，例如父类,Shape,子类 Circle,
         cls = [cls modelCustomClassForDictionary:dictionary] ?: cls;
     }
-    
+    // 生成实例对象
     NSObject *one = [cls new];
+    // 设置属性值
     if ([one yy_modelSetWithDictionary:dictionary]) return one;
     return nil;
 }
@@ -1484,14 +1566,19 @@ static NSString *ModelDescription(NSObject *model) {
     return [self yy_modelSetWithDictionary:dic];
 }
 
+// 核心方法
 - (BOOL)yy_modelSetWithDictionary:(NSDictionary *)dic {
+    // 检测入参
     if (!dic || dic == (id)kCFNull) return NO;
     if (![dic isKindOfClass:[NSDictionary class]]) return NO;
     
-
+    // 获取model meta 类对象
     _YYModelMeta *modelMeta = [_YYModelMeta metaWithClass:object_getClass(self)];
+    
+    // 没有属性需要解析，就立马返回了
     if (modelMeta->_keyMappedCount == 0) return NO;
     
+    // 是否需要预先处理数据，哪个字典
     if (modelMeta->_hasCustomWillTransformFromDictionary) {
         dic = [((id<YYModel>)self) modelCustomWillTransformFromDictionary:dic];
         if (![dic isKindOfClass:[NSDictionary class]]) return NO;
@@ -1635,6 +1722,7 @@ static NSString *ModelDescription(NSObject *model) {
     return one;
 }
 
+// 编码
 - (void)yy_modelEncodeWithCoder:(NSCoder *)aCoder {
     if (!aCoder) return;
     if (self == (id)kCFNull) {
@@ -1692,6 +1780,7 @@ static NSString *ModelDescription(NSObject *model) {
     }
 }
 
+// 解码
 - (id)yy_modelInitWithCoder:(NSCoder *)aDecoder {
     if (!aDecoder) return self;
     if (self == (id)kCFNull) return self;    
@@ -1739,6 +1828,7 @@ static NSString *ModelDescription(NSObject *model) {
     return self;
 }
 
+// hash值计算
 - (NSUInteger)yy_modelHash {
     if (self == (id)kCFNull) return [self hash];
     _YYModelMeta *modelMeta = [_YYModelMeta metaWithClass:self.class];
@@ -1755,13 +1845,21 @@ static NSString *ModelDescription(NSObject *model) {
     return value;
 }
 
+//isEqual
 - (BOOL)yy_modelIsEqual:(id)model {
+    // 自我判断
     if (self == model) return YES;
+    // 类型检测
     if (![model isMemberOfClass:self.class]) return NO;
+    
     _YYModelMeta *modelMeta = [_YYModelMeta metaWithClass:self.class];
+    // OC 的基本类型
     if (modelMeta->_nsType) return [self isEqual:model];
+    
+    // hash 值
     if ([self hash] != [model hash]) return NO;
     
+    // 属性比较
     for (_YYModelPropertyMeta *propertyMeta in modelMeta->_allPropertyMetas) {
         if (!propertyMeta->_isKVCCompatible) continue;
         id this = [self valueForKey:NSStringFromSelector(propertyMeta->_getter)];
@@ -1773,6 +1871,7 @@ static NSString *ModelDescription(NSObject *model) {
     return YES;
 }
 
+// description
 - (NSString *)yy_modelDescription {
     return ModelDescription(self);
 }
@@ -1780,7 +1879,7 @@ static NSString *ModelDescription(NSObject *model) {
 @end
 
 
-
+// 数组的分类，数组里存放字典，字典转成cls对象
 @implementation NSArray (YYModel)
 
 + (NSArray *)yy_modelArrayWithClass:(Class)cls json:(id)json {
@@ -1815,6 +1914,7 @@ static NSString *ModelDescription(NSObject *model) {
 @end
 
 
+// 字典的分类，把每个字典对应的value，转成cls的对象
 @implementation NSDictionary (YYModel)
 
 + (NSDictionary *)yy_modelDictionaryWithClass:(Class)cls json:(id)json {
