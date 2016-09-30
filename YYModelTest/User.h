@@ -8,19 +8,25 @@
 
 #import <Foundation/Foundation.h>
 
+@class Author;
 @interface User : NSObject
 
 //@property UInt64 uid;
 //@property NSString *name;
 //@property NSDate *created;
 
+//@property NSString *name;
+//@property NSInteger page;
+//@property NSString *desc;
+//@property NSString *bookID;
+//@property NSString *hehename;
+//@property (nonatomic, strong) NSArray *books;
+
+@property NSString *bookName;
 @property NSString *name;
-@property NSInteger page;
-@property NSString *desc;
-@property NSString *bookID;
 
-@property NSString *hehename;
+@property Author *author;
 
-@property (nonatomic, strong) NSArray *books;
+- (void)doWork:(NSString*)content;
 
 @end

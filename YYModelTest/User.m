@@ -11,22 +11,31 @@
 
 @implementation User
 
-- (NSString *)description { return [self yy_modelDescription]; }
-
-+ (NSDictionary*)modelContainerPropertyGenericClass{
-    return @{@"shadows" : @"NSNumber"};
+- (void)doWork:(NSString*)content{
+    NSLog(@"%s content = %@",__func__,content);
 }
+
+- (NSString *)description { return [self yy_modelDescription]; }
 
 + (NSDictionary *)modelCustomPropertyMapper {
     return @{@"name"  : @"n",
-             @"page"  : @"p",
-             @"desc"  : @"ext.desc",
-             @"bookID": @[@"id", @"ID", @"book_id"],
-             @"hehename":@"n"};
+             @"bookName" : @"n"};
 }
 
-- (BOOL)modelCustomTransformToDictionary:(NSMutableDictionary *)dic{
-    return YES;
+//+ (NSDictionary *)modelCustomPropertyMapper {
+//    return @{@"name"  : @"n",
+//             @"page"  : @"p",
+//             @"desc"  : @"ext.desc",
+//             @"bookID": @[@"id", @"ID", @"book_id"],
+//             @"hehename":@"n"};
+//}
+
+//- (BOOL)modelCustomTransformToDictionary:(NSMutableDictionary *)dic{
+//    return YES;
+//}
+
++ (NSDictionary*)modelContainerPropertyGenericClass{
+    return @{@"shadows" : @"NSNumber"};
 }
 
 @end

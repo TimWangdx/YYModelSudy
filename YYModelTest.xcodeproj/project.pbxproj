@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		7D1A90B65198FAEF0CC922C3 /* libPods.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 860CC0D6C7DC0C42ECA90E10 /* libPods.a */; };
+		EB905F751D9E3F38003A2CC4 /* Author.m in Sources */ = {isa = PBXBuildFile; fileRef = EB905F741D9E3F38003A2CC4 /* Author.m */; };
 		EB906C431D9A0E8000D8EDBA /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = EB906C421D9A0E8000D8EDBA /* main.m */; };
 		EB906C461D9A0E8000D8EDBA /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = EB906C451D9A0E8000D8EDBA /* AppDelegate.m */; };
 		EB906C491D9A0E8000D8EDBA /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EB906C481D9A0E8000D8EDBA /* ViewController.m */; };
@@ -39,6 +40,8 @@
 /* Begin PBXFileReference section */
 		5242A49332F2C5FD7EF1EDE2 /* Pods.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.release.xcconfig; path = "Pods/Target Support Files/Pods/Pods.release.xcconfig"; sourceTree = "<group>"; };
 		860CC0D6C7DC0C42ECA90E10 /* libPods.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libPods.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		EB905F731D9E3F38003A2CC4 /* Author.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Author.h; sourceTree = "<group>"; };
+		EB905F741D9E3F38003A2CC4 /* Author.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Author.m; sourceTree = "<group>"; };
 		EB906C3E1D9A0E8000D8EDBA /* YYModelTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YYModelTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		EB906C421D9A0E8000D8EDBA /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		EB906C441D9A0E8000D8EDBA /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -128,6 +131,8 @@
 		EB906C401D9A0E8000D8EDBA /* YYModelTest */ = {
 			isa = PBXGroup;
 			children = (
+				EB905F731D9E3F38003A2CC4 /* Author.h */,
+				EB905F741D9E3F38003A2CC4 /* Author.m */,
 				EB906C741D9A135A00D8EDBA /* User.h */,
 				EB906C751D9A135A00D8EDBA /* User.m */,
 				EB906C441D9A0E8000D8EDBA /* AppDelegate.h */,
@@ -354,6 +359,7 @@
 				EB906C491D9A0E8000D8EDBA /* ViewController.m in Sources */,
 				EB906C461D9A0E8000D8EDBA /* AppDelegate.m in Sources */,
 				EB906C431D9A0E8000D8EDBA /* main.m in Sources */,
+				EB905F751D9E3F38003A2CC4 /* Author.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -9,14 +9,14 @@
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "YYModelTest/User.m"
-            timestampString = "496824197.384552"
+            filePath = "Pods/YYModel/YYModel/NSObject+YYModel.m"
+            timestampString = "496910991.051337"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "29"
-            endingLineNumber = "29"
-            landmarkName = "-modelCustomTransformToDictionary:"
-            landmarkType = "5">
+            startingLineNumber = "1237"
+            endingLineNumber = "1237"
+            landmarkName = "ModelSetWithPropertyMetaArrayFunction()"
+            landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -26,12 +26,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Pods/YYModel/YYModel/NSObject+YYModel.m"
-            timestampString = "496830620.40683"
+            timestampString = "496910982.57857"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1196"
-            endingLineNumber = "1196"
-            landmarkName = "ModelSetWithDictionaryFunction()"
+            startingLineNumber = "1107"
+            endingLineNumber = "1107"
+            landmarkName = "ModelSetValueForProperty()"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
